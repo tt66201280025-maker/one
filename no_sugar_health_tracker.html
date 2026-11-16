@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>No-Sugar & Health Tracker | แอปติดตามการงดน้ำหวาน</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Prompt & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        obsidian: '#06090F',
+                        charcoal: '#0D131F',
+                        slateDark: '#151E30',
+                        electric: '#00E5FF',
+                        cyberBlue: '#0284C7',
+                        neonCyan: '#38BDF8',
+                    },
+                    boxShadow: {
+                        'neon': '0 0 20px rgba(0, 229, 255, 0.35)',
+                        'neon-lg': '0 0 35px rgba(0, 229, 255, 0.5)',
+                        'card': '0 8px 32px 0 rgba(0, 0, 0, 0.45)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #06090F;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 229, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(2, 132, 199, 0.1) 0%, transparent 45%);
+            color: #F8FAFC;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Effect */
+        .glass-panel {
+            background: rgba(13, 19, 31, 0.72);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(56, 189, 248, 0.16);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+        }
+
+        .glass-card-inner {
+            background: rgba(21, 30, 48, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card-inner:hover {
+            border-color: rgba(0, 229, 255, 0.35);
+            background: rgba(21, 30, 48, 0.85);
+        }
+
+        /* Pulse Glow Button */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 18px rgba(0, 229, 255, 0.4), inset 0 0 10px rgba(255,255,255,0.2); }
+            50% { box-shadow: 0 0 32px rgba(0, 229, 255, 0.75), inset 0 0 16px rgba(255,255,255,0.35); }
+        }
+
+        .btn-electric {
+            background: linear-gradient(135deg, #00E5FF 0%, #0284C7 100%);
+            animation: pulseGlow 3s infinite;
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+
+        .btn-electric:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-electric:active {
+            transform: scale(0.96);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #06090F;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1E293B;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00E5FF;
+        }
+
+        /* Smooth Fade In */
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up {
+            animation: slideUpFade 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-electric selection:text-obsidian pb-12">
+
+    <!-- Top Navigation / Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-sky-500/20">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-electric to-cyberBlue flex items-center justify-center text-obsidian font-bold text-xl shadow-neon">
+                    <i class="fa-solid fa-droplet-slash"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        ZERO<span class="text-electric">SUGAR</span>
+                        <span class="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-electric/15 text-electric border border-electric/30">Health OS</span>
+                    </h1>
+                    <p class="text-xs text-slate-400" id="headerDateText">กำลังโหลดวันที่...</p>
+                </div>
+            </div>
+
+            <!-- Today Status Badge -->
+            <div id="todayRuleBadge" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium border transition-all cursor-pointer" onclick="scrollToCalendar()" title="คลิกเพื่อดูตารางวันอนุญาต/วันงด">
+                <!-- Dynamic Content -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+
+        <!-- SECTION 1 & 2: Main Action Hero + Real-time Feedback + Stats -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left: Action Card & Feedback (7 cols) -->
+            <div class="lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden flex flex-col justify-between">
+                <!-- Decorative Glow Orb -->
+                <div class="absolute -top-24 -right-24 w-64 h-64 bg-electric/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-electric bg-electric/10 px-3 py-1 rounded-full border border-electric/20">
+                            <span class="w-2 h-2 rounded-full bg-electric animate-ping"></span>
+                            ภารกิจสุขภาพวันนี้
+                        </span>
+                        <span class="text-xs text-slate-400">วันนี้คุณงดไปแล้ว <strong id="todaySkipCountText" class="text-white text-sm">0</strong> แก้ว/มื้อ</span>
+                    </div>
+
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white leading-snug mb-2">
+                        ชนะใจตัวเองอีกนิด <br class="hidden sm:inline">เพื่อสุขภาพที่ดีกว่าเดิม!
+                    </h2>
+                    <p class="text-slate-400 text-sm sm:text-base mb-6">
+                        ทุกครั้งที่ปฏิเสธชานมไข่มุก น้ำอัดลม หรือขนมหวาน กดบันทึกด้านล่างเพื่อดูการเปลี่ยนแปลงของร่างกายคุณ
+                    </p>
+
+                    <!-- Primary Action Button -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
+                        <button onclick="recordSkipSugar()" class="btn-electric text-obsidian font-bold text-base sm:text-lg py-4 px-6 rounded-2xl flex items-center justify-center gap-3 flex-1 cursor-pointer">
+                            <i class="fa-solid fa-circle-check text-xl"></i>
+                            <span>วันนี้งดได้ +1 แก้ว / 1 มื้อ</span>
+                        </button>
+                        <button onclick="undoTodaySkip()" id="undoSkipBtn" class="hidden glass-card-inner text-slate-300 hover:text-rose-400 hover:border-rose-500/40 font-medium text-sm py-4 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all" title="ลดจำนวนของวันนี้ลง 1">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>ลด 1</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dynamic Real-Time Health Feedback Box -->
+                <div id="feedbackBox" class="rounded-2xl bg-gradient-to-r from-slateDark/90 to-charcoal/90 border border-electric/30 p-4 sm:p-5 relative transition-all">
+                    <div class="flex items-start gap-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-electric/20 border border-electric/40 flex items-center justify-center text-electric shrink-0 mt-0.5">
+                            <i id="feedbackIcon" class="fa-solid fa-heart-pulse text-lg"></i>
+                        </div>
+                        <div class="space-y-1 flex-1">
+                            <div class="flex items-center justify-between">
+                                <h3 id="feedbackTitle" class="font-semibold text-electric text-sm sm:text-base">พร้อมเริ่มต้นวันใหม่ไร้ความหวาน!</h3>
+                                <span id="stageBadge" class="text-[11px] px-2 py-0.5 rounded-md bg-sky-950 text-neonCyan border border-sky-700/50">Day 1 Stage</span>
+                            </div>
+                            <p id="feedbackMessage" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                                กดปุ่ม <strong>"วันนี้งดได้ +1 แก้ว"</strong> เมื่อคุณเลือกดื่มน้ำเปล่าหรือปฏิเสธของหวานสำเร็จ ร่างกายจะเริ่มปรับสมดุลระดับน้ำตาลในเลือดทันที
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Key Health Metrics Grid (5 cols) -->
+            <div class="lg:col-span-5 grid grid-cols-2 gap-4">
+                <!-- Stat 1: Streak -->
+                <div class="glass-panel rounded-3xl p-5 flex flex-col justify-between relative overflow-hidden group">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-lg mb-3">
+                        <i class="fa-solid fa-fire"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">ทำต่อเนื่อง (Streak)</p>
+                        <div class="flex items-baseline gap-1.5 mt-1">
+                            <span id="statStreak" class="text-3xl sm:text-4xl font-bold text-white">0</span>
+                            <span class="text-sm text-amber-400 font-medium">วัน</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2">ทำต่อเนื่องช่วยสร้างนิสัยใหม่</p>
+                </div>
+
+                <!-- Stat 2: Total Glasses/Meals Avoided -->
+                <div class="glass-panel rounded-3xl p-5 flex flex-col justify-between relative overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-electric/15 border border-electric/30 text-electric flex items-center justify-center text-lg mb-3">
+                        <i class="fa-solid fa-cup-straw"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">งดได้ทั้งหมด</p>
+                        <div class="flex items-baseline gap-1.5 mt-1">
+                            <span id="statTotalCups" class="text-3xl sm:text-4xl font-bold text-electric">0</span>
+                            <span class="text-sm text-slate-300 font-medium">แก้ว/มื้อ</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2">ชนะใจตัวเองทุกครั้งที่งด</p>
+                </div>
+
+                <!-- Stat 3: Sugar Reduced (grams) -->
+                <div class="glass-panel rounded-3xl p-5 flex flex-col justify-between relative overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-lg mb-3">
+                        <i class="fa-solid fa-cubes-stacked"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">ลดน้ำตาลสะสม</p>
+                        <div class="flex items-baseline gap-1.5 mt-1">
+                            <span id="statSugarGrams" class="text-2xl sm:text-3xl font-bold text-emerald-400">0</span>
+                            <span class="text-sm text-slate-300 font-medium">กรัม</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2">≈ <span id="statSugarSpoons">0</span> ช้อนชา (เฉลี่ย 25g/แก้ว)</p>
+                </div>
+
+                <!-- Stat 4: Calories Saved -->
+                <div class="glass-panel rounded-3xl p-5 flex flex-col justify-between relative overflow-hidden">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400 flex items-center justify-center text-lg mb-3">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium">ลดพลังงานส่วนเกิน</p>
+                        <div class="flex items-baseline gap-1.5 mt-1">
+                            <span id="statCalories" class="text-2xl sm:text-3xl font-bold text-purple-400">0</span>
+                            <span class="text-sm text-slate-300 font-medium">kcal</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2">เฉลี่ย ~180 kcal ต่อแก้ว/มื้อ</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: Today's Healthy Picks (แนะนำของกิน/เครื่องดื่มทางเลือกวันนี้) -->
+        <section class="glass-panel rounded-3xl p-6 sm:p-7">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-utensils text-electric"></i>
+                        วันนี้ควรกินอะไรแทนของหวานดี?
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-400">เมนูทางเลือกแคลอรีต่ำ สดชื่น ไม่กระตุ้นอินซูลินพุ่งสูง</p>
+                </div>
+                <button onclick="shuffleHealthyPicks()" class="self-start sm:self-auto glass-card-inner hover:border-electric text-electric text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-shuffle"></i>
+                    <span>สุ่มเมนูแนะนำใหม่</span>
+                </button>
+            </div>
+
+            <div id="healthyPicksGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- SECTION 3 & 5: Symptom Logger + Cheat Day / Strict Day Calendar -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6" id="trackerBottomGrid">
+            
+            <!-- Left: Symptom & Mood Logger (5 cols) -->
+            <section class="lg:col-span-5 glass-panel rounded-3xl p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-notes-medical text-electric"></i>
+                            บันทึกอาการวันนี้
+                        </h2>
+                        <span class="text-xs text-slate-400" id="symptomDateLabel">วันนี้</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4">เลือกอาการที่รู้สึกได้ในวันนี้ (เลือกได้มากกว่า 1 ข้อ)</p>
+
+                    <!-- Symptom Chips -->
+                    <div id="symptomChipsContainer" class="grid grid-cols-2 gap-2.5 mb-4">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <!-- Additional Note Input -->
+                    <div class="mb-4">
+                        <label for="symptomNoteInput" class="block text-xs font-medium text-slate-300 mb-1.5">บันทึกเพิ่มเติม (ถ้ามี)</label>
+                        <textarea id="symptomNoteInput" rows="2" placeholder="เช่น บ่ายนี้แอบอยากชาเย็น แต่ดื่มน้ำโซดามะนาวแทนได้..." class="w-full rounded-xl bg-obsidian/80 border border-slate-700/80 focus:border-electric focus:ring-1 focus:ring-electric text-sm text-white placeholder-slate-500 p-3 outline-none transition-all resize-none"></textarea>
+                    </div>
+
+                    <button onclick="saveTodaySymptoms()" class="w-full py-3 px-4 rounded-xl bg-electric/15 hover:bg-electric/25 border border-electric/50 text-electric font-semibold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>บันทึกอาการของวันนี้</span>
+                    </button>
+                </div>
+
+                <!-- Recent Symptom History -->
+                <div class="mt-6 pt-5 border-t border-slate-800">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                        <span>ประวัติอาการย้อนหลัง</span>
+                        <span id="historyCountBadge" class="text-electric">0 รายการ</span>
+                    </h3>
+                    <div id="symptomHistoryList" class="space-y-2.5 max-h-52 overflow-y-auto pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right: Cheat Day & Strict Day Interactive Calendar (7 cols) -->
+            <section id="calendarSection" class="lg:col-span-7 glass-panel rounded-3xl p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-check text-electric"></i>
+                                ปฏิทินวันงดเคร่งครัด & วันให้รางวัลตัวเอง
+                            </h2>
+                            <p class="text-xs text-slate-400">คลิกที่วันที่ในปฏิทินเพื่อดูสรุปผล หรือเปลี่ยนสถานะ <span class="text-electric">วันงด</span> / <span class="text-amber-400">วันกินได้</span></p>
+                        </div>
+
+                        <!-- Month Navigator -->
+                        <div class="flex items-center gap-2 bg-obsidian/70 px-3 py-1.5 rounded-xl border border-slate-800 self-start sm:self-auto">
+                            <button onclick="changeMonth(-1)" class="w-7 h-7 rounded-lg hover:bg-slate-800 text-slate-300 flex items-center justify-center cursor-pointer" title="เดือนก่อนหน้า">
+                                <i class="fa-solid fa-chevron-left text-xs"></i>
+                            </button>
+                            <span id="calendarMonthYear" class="text-sm font-semibold text-white min-w-[120px] text-center">พฤศจิกายน 2026</span>
+                            <button onclick="changeMonth(1)" class="w-7 h-7 rounded-lg hover:bg-slate-800 text-slate-300 flex items-center justify-center cursor-pointer" title="เดือนถัดไป">
+                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex flex-wrap items-center gap-3 text-xs mb-4 bg-obsidian/50 p-2.5 rounded-xl border border-slate-800/80">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-electric shadow-[0_0_8px_#00E5FF]"></span>
+                            <span class="text-slate-300">วันงดเคร่งครัด (Strict Day)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_8px_#FBBF24]"></span>
+                            <span class="text-slate-300">วันกินได้เล็กน้อย (Cheat Day)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-emerald-400"></span>
+                            <span class="text-slate-300">มีบันทึกงดสำเร็จ</span>
+                        </div>
+                    </div>
+
+                    <!-- Weekday Headers -->
+                    <div class="grid grid-cols-7 gap-1.5 text-center text-xs font-semibold text-slate-400 mb-2">
+                        <div class="text-rose-400">อา.</div>
+                        <div>จ.</div>
+                        <div>อ.</div>
+                        <div>พ.</div>
+                        <div>พฤ.</div>
+                        <div>ศ.</div>
+                        <div class="text-sky-400">ส.</div>
+                    </div>
+
+                    <!-- Calendar Days Grid -->
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 sm:gap-2">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Selected Day Inspector Panel -->
+                <div id="selectedDayPanel" class="mt-5 p-4 rounded-2xl glass-card-inner border border-sky-500/20">
+                    <!-- Populated by JS when clicking a date -->
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- Custom Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // ==========================================
+        // 1. DATA & STATE MANAGEMENT
+        // ==========================================
+        const STORAGE_KEY = 'zero_sugar_health_tracker_v1';
+
+        const SYMPTOM_OPTIONS = [
+            { id: 'fresh', label: 'สดชื่น มีพลัง', icon: 'fa-bolt', color: 'text-electric border-electric/40 bg-electric/10' },
+            { id: 'clear_skin', label: 'ผิวใส ไม่บวมน้ำ', icon: 'fa-sparkles', color: 'text-emerald-400 border-emerald-400/40 bg-emerald-400/10' },
+            { id: 'craving', label: 'อยากของหวานมาก', icon: 'fa-cookie-bite', color: 'text-amber-400 border-amber-400/40 bg-amber-400/10' },
+            { id: 'sleepy', label: 'ง่วงนอน / เพลีย', icon: 'fa-bed', color: 'text-indigo-400 border-indigo-400/40 bg-indigo-400/10' },
+            { id: 'headache', label: 'ปวดหัว / มึน', icon: 'fa-head-side-virus', color: 'text-rose-400 border-rose-400/40 bg-rose-400/10' },
+            { id: 'moody', label: 'หงุดหงิดง่าย', icon: 'fa-face-tired', color: 'text-orange-400 border-orange-400/40 bg-orange-400/10' }
+        ];
+
+        const HEALTHY_MENU_POOL = [
+            {
+                name: 'ชาเขียวมัทฉะเพียว (ไม่หวาน)',
+                category: 'เครื่องดื่ม',
+                cal: '5 kcal',
+                benefit: 'มีสาร EGCG ช่วยเร่งการเผาผลาญและทำให้ตื่นตัวโดยไม่พึ่งน้ำตาล',
+                icon: 'fa-mug-hot'
+            },
+            {
+                name: 'น้ำโซดามะนาวเกลือชมพู',
+                category: 'เครื่องดื่มซ่าสดชื่น',
+                cal: '10 kcal',
+                benefit: 'ทดแทนน้ำอัดลมได้ดีเยี่ยม ซ่าสดชื่น ช่วยลดอาการอยากหวานทันที',
+                icon: 'fa-lemon'
+            },
+            {
+                name: 'อัลมอนด์อบธรรมชาติ 1 กำมือ',
+                category: 'ของว่าง',
+                cal: '160 kcal',
+                benefit: 'ไขมันดีและโปรตีนสูง ช่วยให้อิ่มนาน คุมระดับน้ำตาลในเลือดให้นิ่ง',
+                icon: 'fa-seedling'
+            },
+            {
+                name: 'ฝรั่งสด หรือ แอปเปิลเขียว',
+                category: 'ผลไม้หวานน้อย',
+                cal: '60 kcal',
+                benefit: 'กากใยสูง วิตามินซีแน่น เคี้ยวเพลินแก้เหงาปากแทนขนมกรุบกรอบ',
+                icon: 'fa-apple-whole'
+            },
+            {
+                name: 'อเมริกาโน่เย็นไม่หวาน',
+                category: 'เครื่องดื่ม',
+                cal: '10 kcal',
+                benefit: 'กระตุ้นความสดชื่นยามบ่าย ไร้ไขมันทรานส์และครีมเทียม',
+                icon: 'fa-mug-saucer'
+            },
+            {
+                name: 'กรีกโยเกิร์ตธรรมชาติ + เมล็ดเจีย',
+                category: 'ของว่างสุขภาพ',
+                cal: '130 kcal',
+                benefit: 'โปรตีนสูงมากและมีโพรไบโอติกส์ ช่วยปรับสมดุลลำไส้ลดความอยากหวาน',
+                icon: 'fa-bowl-food'
+            },
+            {
+                name: 'ดาร์กช็อกโกแลต 85% (2 ชิ้นเล็ก)',
+                category: 'ของหวานทางเลือก',
+                cal: '90 kcal',
+                benefit: 'ช่วยหลั่งสารเอนดอร์ฟินแก้เครียดเวลาอยากช็อกโกแลต แต่น้ำตาลต่ำมาก',
+                icon: 'fa-cubes'
+            },
+            {
+                name: 'น้ำใบเตยต้มไม่ใส่น้ำตาล (แช่เย็น)',
+                category: 'เครื่องดื่มสมุนไพร',
+                cal: '0 kcal',
+                benefit: 'กลิ่นหอมหวานธรรมชาติ ช่วยผ่อนคลายและดับกระหายได้ดีเยี่ยม',
+                icon: 'fa-leaf'
+            }
+        ];
+
+        const ENCOURAGEMENT_STAGES = [
+            {
+                minStreak: 0,
+                stage: 'เริ่มต้นก้าวแรก',
+                title: 'เยี่ยมมาก! คุณลดน้ำตาลไปได้แล้ว ~25 กรัม',
+                message: 'ระดับน้ำตาลในเลือดเริ่มคงที่ ตับอ่อนไม่ต้องทำงานหนักเพื่อหลั่งอินซูลินฉับพลัน ร่างกายกำลังขอบคุณคุณ!'
+            },
+            {
+                minStreak: 2,
+                stage: 'Day 2-3: ช่วงปรับตัว',
+                title: 'สุดยอด! คุณผ่านช่วงโหยน้ำตาลระยะแรกมาได้',
+                message: 'สมองกำลังลดการพึ่งพาสารโดพามีนจากน้ำตาล อาการง่วงซึมช่วงบ่ายจะค่อยๆ ลดลง ดื่มน้ำเปล่าตามเยอะๆ นะ!'
+            },
+            {
+                minStreak: 4,
+                stage: 'Day 4-6: เผาผลาญดีขึ้น',
+                title: 'ระดับอินซูลินสมดุล ร่างกายเริ่มดึงไขมันสะสมมาใช้!',
+                message: 'เมื่อไม่มีน้ำตาลส่วนเกิน ร่างกายจะเข้าสู่โหมดเผาผลาญไขมันได้ดีขึ้น และอาการบวมน้ำตามใบหน้าจะเริ่มลดลง'
+            },
+            {
+                minStreak: 7,
+                stage: 'Day 7+: ปลดล็อก 1 สัปดาห์!',
+                title: 'มหัศจรรย์ 7 วันไร้หวาน! ต่อมรับรสของคุณรีเซ็ตแล้ว',
+                message: 'ผิวพรรณเริ่มกระจ่างใสขึ้น ลดการอักเสบของสิว และคุณจะเริ่มรู้สึกว่าอาหารธรรมชาติมีรสชาติอร่อยขึ้นกว่าเดิม!'
+            }
+        ];
+
+        // Default Application State
+        let appState = {
+            // logs keyed by 'YYYY-MM-DD': { cupsSkipped: number, symptoms: string[], note: string }
+            logs: {},
+            // dayTypes keyed by 'YYYY-MM-DD': 'strict' | 'cheat'
+            dayTypes: {},
+            currentMenus: []
+        };
+
+        // Calendar viewing state
+        let todayDateObj = new Date();
+        let currentViewYear = todayDateObj.getFullYear();
+        let currentViewMonth = todayDateObj.getMonth();
+        let selectedDateStr = formatDateKey(todayDateObj);
+
+        // ==========================================
+        // 2. INITIALIZATION & STORAGE
+        // ==========================================
+        function formatDateKey(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatThaiDate(dateStr) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const date = new Date(y, m - 1, d);
+            const thaiMonths = [
+                'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+            ];
+            const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+            return `วัน${thaiDays[date.getDay()]}ที่ ${d} ${thaiMonths[m - 1]} ${y + 543}`;
+        }
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState.logs = parsed.logs || {};
+                    appState.dayTypes = parsed.dayTypes || {};
+                    appState.currentMenus = parsed.currentMenus || [];
+                }
+            } catch (e) {
+                console.error('Failed to load state from localStorage:', e);
+            }
+
+            // Initialize default day types for current month if empty (e.g., Sundays as Cheat Day)
+            initDefaultDayTypesForMonth(currentViewYear, currentViewMonth);
+
+            // Pick initial 4 healthy menus if none saved
+            if (!appState.currentMenus || appState.currentMenus.length === 0) {
+                shuffleHealthyPicks(false);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('Failed to save state:', e);
+            }
+        }
+
+        function initDefaultDayTypesForMonth(year, month) {
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            let modified = false;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(year, month, d);
+                const key = formatDateKey(dateObj);
+                if (!appState.dayTypes[key]) {
+                    // Default rule: Sunday (0) is suggested Cheat Day, Mon-Sat are Strict Days
+                    appState.dayTypes[key] = (dateObj.getDay() === 0) ? 'cheat' : 'strict';
+                    modified = true;
+                }
+            }
+            if (modified) saveState();
+        }
+
+        // ==========================================
+        // 3. CORE FEATURES: SKIP SUGAR & FEEDBACK
+        // ==========================================
+        function recordSkipSugar() {
+            const todayKey = formatDateKey(new Date());
+            if (!appState.logs[todayKey]) {
+                appState.logs[todayKey] = { cupsSkipped: 0, symptoms: [], note: '' };
+            }
+            appState.logs[todayKey].cupsSkipped += 1;
+            saveState();
+
+            // Trigger celebratory mini-confetti
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 45,
+                    spread: 60,
+                    origin: { y: 0.7 },
+                    colors: ['#00E5FF', '#38BDF8', '#10B981', '#FFFFFF']
+                });
+            }
+
+            updateAllUI(true);
+            showToast('บันทึกสำเร็จ! วันนี้คุณงดเพิ่มอีก 1 แก้ว/มื้อ 🎉', 'success');
+        }
+
+        function undoTodaySkip() {
+            const todayKey = formatDateKey(new Date());
+            if (appState.logs[todayKey] && appState.logs[todayKey].cupsSkipped > 0) {
+                appState.logs[todayKey].cupsSkipped -= 1;
+                saveState();
+                updateAllUI(false);
+                showToast('ปรับลดจำนวนบันทึกของวันนี้ลง 1 แล้ว', 'info');
+            }
+        }
+
+        function calculateStats() {
+            let totalCups = 0;
+            Object.values(appState.logs).forEach(log => {
+                totalCups += (log.cupsSkipped || 0);
+            });
+
+            // Calculate Streak (consecutive days up to today or yesterday with >=1 cup skipped)
+            let streak = 0;
+            let checkDate = new Date();
+            const todayKey = formatDateKey(checkDate);
+
+            // If today has 0 skipped so far, check starting from yesterday so streak doesn't prematurely show 0 during the day
+            if (!appState.logs[todayKey] || (appState.logs[todayKey].cupsSkipped || 0) === 0) {
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+
+            while (true) {
+                const key = formatDateKey(checkDate);
+                if (appState.logs[key] && (appState.logs[key].cupsSkipped || 0) > 0) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+
+            const sugarGrams = totalCups * 25; // ~25g sugar per sweet drink/dessert
+            const sugarSpoons = (sugarGrams / 4).toFixed(1); // 1 tsp ≈ 4g
+            const calories = totalCups * 180; // ~180 kcal average
+
+            return { totalCups, streak, sugarGrams, sugarSpoons, calories };
+        }
+
+        function updateFeedbackDisplay(stats, todayCups, justClicked = false) {
+            const feedbackTitle = document.getElementById('feedbackTitle');
+            const feedbackMessage = document.getElementById('feedbackMessage');
+            const stageBadge = document.getElementById('stageBadge');
+            const feedbackBox = document.getElementById('feedbackBox');
+
+            if (stats.totalCups === 0) {
+                stageBadge.textContent = 'พร้อมเริ่มต้น';
+                feedbackTitle.textContent = 'พร้อมเริ่มต้นวันใหม่ไร้ความหวาน!';
+                feedbackMessage.innerHTML = 'กดปุ่ม <strong>"วันนี้งดได้ +1 แก้ว"</strong> เมื่อคุณเลือกดื่มน้ำเปล่าหรือปฏิเสธของหวานสำเร็จ ร่างกายจะเริ่มปรับสมดุลระดับน้ำตาลในเลือดทันที';
+                return;
+            }
+
+            // Pick stage based on streak
+            let currentStage = ENCOURAGEMENT_STAGES[0];
+            for (let s of ENCOURAGEMENT_STAGES) {
+                if (stats.streak >= s.minStreak) {
+                    currentStage = s;
+                }
+            }
+
+            stageBadge.textContent = currentStage.stage;
+
+            if (justClicked) {
+                const todaySugar = todayCups * 25;
+                feedbackTitle.textContent = `เยี่ยมมาก! วันนี้คุณลดน้ำตาลไปได้ ~${todaySugar} กรัมแล้ว`;
+                feedbackMessage.textContent = currentStage.message;
+                
+                // Highlight flash animation
+                feedbackBox.classList.add('ring-2', 'ring-electric');
+                setTimeout(() => feedbackBox.classList.remove('ring-2', 'ring-electric'), 800);
+            } else {
+                feedbackTitle.textContent = currentStage.title;
+                feedbackMessage.textContent = currentStage.message;
+            }
+        }
+
+        // ==========================================
+        // 4. HEALTHY PICKS GENERATOR
+        // ==========================================
+        function shuffleHealthyPicks(notify = true) {
+            const shuffled = [...HEALTHY_MENU_POOL].sort(() => 0.5 - Math.random());
+            appState.currentMenus = shuffled.slice(0, 4);
+            saveState();
+            renderHealthyPicks();
+            if (notify) {
+                showToast('สุ่มเมนูสุขภาพทางเลือกใหม่ให้แล้ว!', 'info');
+            }
+        }
+
+        function renderHealthyPicks() {
+            const container = document.getElementById('healthyPicksGrid');
+            container.innerHTML = appState.currentMenus.map(item => `
+                <div class="glass-card-inner rounded-2xl p-4 flex flex-col justify-between animate-slide-up">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-electric/10 text-electric border border-electric/20">
+                                ${item.category}
+                            </span>
+                            <span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                                ${item.cal}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2.5 mb-2">
+                            <div class="w-8 h-8 rounded-lg bg-sky-500/15 text-neonCyan flex items-center justify-center shrink-0">
+                                <i class="fa-solid ${item.icon}"></i>
+                            </div>
+                            <h3 class="font-semibold text-white text-sm leading-snug">${item.name}</h3>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed">${item.benefit}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==========================================
+        // 5. SYMPTOM & MOOD LOGGER
+        // ==========================================
+        let selectedTodaySymptoms = [];
+
+        function initSymptomForm() {
+            const todayKey = formatDateKey(new Date());
+            const existing = appState.logs[todayKey];
+            selectedTodaySymptoms = existing && existing.symptoms ? [...existing.symptoms] : [];
+            document.getElementById('symptomNoteInput').value = existing && existing.note ? existing.note : '';
+            renderSymptomChips();
+            renderSymptomHistory();
+        }
+
+        function renderSymptomChips() {
+            const container = document.getElementById('symptomChipsContainer');
+            container.innerHTML = SYMPTOM_OPTIONS.map(opt => {
+                const isSelected = selectedTodaySymptoms.includes(opt.id);
+                const activeClasses = isSelected 
+                    ? `${opt.color} ring-1 ring-current font-semibold` 
+                    : 'bg-obsidian/60 border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-200';
+                
+                return `
+                    <button type="button" onclick="toggleSymptom('${opt.id}')" class="p-2.5 rounded-xl border text-left text-xs flex items-center gap-2 transition-all cursor-pointer ${activeClasses}">
+                        <i class="fa-solid ${opt.icon} w-4 text-center"></i>
+                        <span class="truncate">${opt.label}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function toggleSymptom(symptomId) {
+            if (selectedTodaySymptoms.includes(symptomId)) {
+                selectedTodaySymptoms = selectedTodaySymptoms.filter(id => id !== symptomId);
+            } else {
+                selectedTodaySymptoms.push(symptomId);
+            }
+            renderSymptomChips();
+        }
+
+        function saveTodaySymptoms() {
+            const todayKey = formatDateKey(new Date());
+            const noteVal = document.getElementById('symptomNoteInput').value.trim();
+
+            if (!appState.logs[todayKey]) {
+                appState.logs[todayKey] = { cupsSkipped: 0, symptoms: [], note: '' };
+            }
+
+            appState.logs[todayKey].symptoms = [...selectedTodaySymptoms];
+            appState.logs[todayKey].note = noteVal;
+            saveState();
+
+            renderSymptomHistory();
+            renderCalendar();
+            renderSelectedDayPanel();
+            showToast('บันทึกอาการและโน้ตของวันนี้เรียบร้อยแล้ว', 'success');
+        }
+
+        function renderSymptomHistory() {
+            const listEl = document.getElementById('symptomHistoryList');
+            const badgeEl = document.getElementById('historyCountBadge');
+
+            // Filter dates that have either symptoms or notes
+            const entries = Object.entries(appState.logs)
+                .filter(([_, data]) => (data.symptoms && data.symptoms.length > 0) || (data.note && data.note.length > 0))
+                .sort((a, b) => b[0].localeCompare(a[0])); // Newest first
+
+            badgeEl.textContent = `${entries.length} รายการ`;
+
+            if (entries.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-6 text-xs text-slate-500 bg-obsidian/40 rounded-xl border border-dashed border-slate-800">
+                        ยังไม่มีประวัติบันทึกอาการ ลองเลือกอาการด้านบนแล้วกดบันทึกได้เลย
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = entries.map(([dateKey, data]) => {
+                const badges = (data.symptoms || []).map(symId => {
+                    const found = SYMPTOM_OPTIONS.find(s => s.id === symId);
+                    return found ? `<span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md border ${found.color}"><i class="fa-solid ${found.icon} text-[10px]"></i> ${found.label}</span>` : '';
+                }).join(' ');
+
+                return `
+                    <div class="p-3 rounded-xl bg-obsidian/70 border border-slate-800/90 space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px] text-slate-400">
+                            <span class="font-medium text-sky-300">${formatThaiDate(dateKey)}</span>
+                            <span>งด ${data.cupsSkipped || 0} แก้ว</span>
+                        </div>
+                        ${badges ? `<div class="flex flex-wrap gap-1">${badges}</div>` : ''}
+                        ${data.note ? `<p class="text-xs text-slate-300 italic">"${escapeHTML(data.note)}"</p>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // 6. CHEAT DAY & STRICT DAY CALENDAR PLANNER
+        // ==========================================
+        function changeMonth(offset) {
+            currentViewMonth += offset;
+            if (currentViewMonth > 11) {
+                currentViewMonth = 0;
+                currentViewYear++;
+            } else if (currentViewMonth < 0) {
+                currentViewMonth = 11;
+                currentViewYear--;
+            }
+            initDefaultDayTypesForMonth(currentViewYear, currentViewMonth);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const monthNames = [
+                'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+            ];
+            document.getElementById('calendarMonthYear').textContent = `${monthNames[currentViewMonth]} ${currentViewYear + 543}`;
+
+            const firstDayIndex = new Date(currentViewYear, currentViewMonth, 1).getDay();
+            const daysInMonth = new Date(currentViewYear, currentViewMonth + 1, 0).getDate();
+            const todayKey = formatDateKey(new Date());
+
+            const gridEl = document.getElementById('calendarGrid');
+            let html = '';
+
+            // Empty slots before 1st of month
+            for (let i = 0; i < firstDayIndex; i++) {
+                html += `<div class="h-12 sm:h-14 rounded-xl bg-obsidian/20"></div>`;
+            }
+
+            // Days of the month
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(currentViewYear, currentViewMonth, d);
+                const dateKey = formatDateKey(dateObj);
+                const dayType = appState.dayTypes[dateKey] || 'strict';
+                const logData = appState.logs[dateKey];
+                const hasSkipped = logData && logData.cupsSkipped > 0;
+                const isToday = (dateKey === todayKey);
+                const isSelected = (dateKey === selectedDateStr);
+
+                const typeBorder = dayType === 'cheat'
+                    ? 'border-amber-400/50 bg-amber-500/10 text-amber-200'
+                    : 'border-electric/30 bg-slateDark/60 text-slate-200';
+
+                const selectedRing = isSelected ? 'ring-2 ring-white scale-[1.03] z-10' : '';
+                const todayIndicator = isToday ? 'underline decoration-electric decoration-2 underline-offset-4 font-bold text-white' : '';
+
+                html += `
+                    <button type="button" onclick="selectCalendarDate('${dateKey}')" class="h-12 sm:h-14 rounded-xl border ${typeBorder} ${selectedRing} p-1.5 flex flex-col items-center justify-between transition-all hover:brightness-125 cursor-pointer relative">
+                        <span class="text-xs sm:text-sm ${todayIndicator}">${d}</span>
+                        <div class="flex items-center gap-1">
+                            ${dayType === 'cheat' 
+                                ? '<span class="w-1.5 h-1.5 rounded-full bg-amber-400" title="วันกินได้เล็กน้อย"></span>' 
+                                : '<span class="w-1.5 h-1.5 rounded-full bg-electric" title="วันงดเคร่งครัด"></span>'}
+                            ${hasSkipped 
+                                ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400" title="งดสำเร็จ"></span>' 
+                                : ''}
+                        </div>
+                    </button>
+                `;
+            }
+
+            gridEl.innerHTML = html;
+            renderSelectedDayPanel();
+        }
+
+        function selectCalendarDate(dateKey) {
+            selectedDateStr = dateKey;
+            renderCalendar();
+        }
+
+        function toggleDayType(dateKey) {
+            const current = appState.dayTypes[dateKey] || 'strict';
+            appState.dayTypes[dateKey] = (current === 'strict') ? 'cheat' : 'strict';
+            saveState();
+
+            renderCalendar();
+            updateHeaderRuleBadge();
+
+            const statusText = appState.dayTypes[dateKey] === 'cheat' 
+                ? 'เปลี่ยนเป็น "วันกินได้เล็กน้อย (Cheat Day)" 🍰' 
+                : 'เปลี่ยนเป็น "วันงดเคร่งครัด (Strict Day)" 🛡️';
+            showToast(statusText, 'info');
+        }
+
+        function renderSelectedDayPanel() {
+            const panel = document.getElementById('selectedDayPanel');
+            const dayType = appState.dayTypes[selectedDateStr] || 'strict';
+            const log = appState.logs[selectedDateStr] || { cupsSkipped: 0, symptoms: [], note: '' };
+
+            const isCheat = dayType === 'cheat';
+            const statusBanner = isCheat
+                ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-400/40"><i class="fa-solid fa-cake-candles"></i> วันนี้กินได้เล็กน้อย (Cheat Day)</span>`
+                : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-electric/20 text-electric border border-electric/40"><i class="fa-solid fa-shield-halved"></i> วันนี้งดเคร่งครัด (Strict Day)</span>`;
+
+            const ruleAdvice = isCheat
+                ? 'อนุญาตให้รางวัลตัวเองได้ 1 มื้อ/แก้วเล็กๆ (แนะนำสั่งหวาน 25% หรือแบ่งทานกับเพื่อน เพื่อไม่ให้หลุดยาว)'
+                : 'งดน้ำหวาน น้ำอัดลม และขนมหวาน 100% เน้นน้ำเปล่า ชาไม่หวาน และอาหารโปรตีนสูง';
+
+            const symptomLabels = (log.symptoms || []).map(id => {
+                const found = SYMPTOM_OPTIONS.find(s => s.id === id);
+                return found ? found.label : '';
+            }).filter(Boolean).join(', ');
+
+            panel.innerHTML = `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-700/70">
+                    <div>
+                        <p class="text-xs text-slate-400">รายละเอียดวันที่เลือก</p>
+                        <h4 class="text-sm sm:text-base font-bold text-white">${formatThaiDate(selectedDateStr)}</h4>
+                    </div>
+                    <button onclick="toggleDayType('${selectedDateStr}')" class="px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-2 self-start sm:self-auto ${isCheat ? 'bg-electric/15 border-electric/50 text-electric hover:bg-electric/25' : 'bg-amber-500/15 border-amber-400/50 text-amber-300 hover:bg-amber-500/25'}">
+                        <i class="fa-solid fa-repeat"></i>
+                        <span>สลับเป็น ${isCheat ? 'วันงดเคร่งครัด' : 'วันกินได้เล็กน้อย'}</span>
+                    </button>
+                </div>
+
+                <div class="mt-3 space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        ${statusBanner}
+                        <span class="text-xs text-emerald-400 font-medium">
+                            <i class="fa-solid fa-circle-check mr-1"></i>งดสำเร็จ: <strong>${log.cupsSkipped || 0}</strong> แก้ว/มื้อ
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">${ruleAdvice}</p>
+                    ${symptomLabels || log.note ? `
+                        <div class="pt-2 border-t border-slate-800/80 text-xs space-y-1">
+                            ${symptomLabels ? `<p class="text-slate-400"><strong class="text-slate-200">อาการที่บันทึก:</strong> ${symptomLabels}</p>` : ''}
+                            ${log.note ? `<p class="text-slate-400"><strong class="text-slate-200">โน้ต:</strong> "${escapeHTML(log.note)}"</p>` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function updateHeaderRuleBadge() {
+            const todayKey = formatDateKey(new Date());
+            const type = appState.dayTypes[todayKey] || 'strict';
+            const badge = document.getElementById('todayRuleBadge');
+
+            if (type === 'cheat') {
+                badge.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold border bg-amber-500/15 border-amber-400/50 text-amber-300 cursor-pointer hover:bg-amber-500/25 transition-all';
+                badge.innerHTML = `<i class="fa-solid fa-cake-candles"></i><span>วันนี้: กินได้เล็กน้อย</span>`;
+            } else {
+                badge.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold border bg-electric/15 border-electric/50 text-electric cursor-pointer hover:bg-electric/25 transition-all';
+                badge.innerHTML = `<i class="fa-solid fa-shield-halved"></i><span>วันนี้: งดเคร่งครัด</span>`;
+            }
+        }
+
+        // ==========================================
+        // 7. UI HELPERS & MASTER UPDATE
+        // ==========================================
+        function updateAllUI(justClicked = false) {
+            const todayKey = formatDateKey(new Date());
+            document.getElementById('headerDateText').textContent = formatThaiDate(todayKey);
+
+            const todayLog = appState.logs[todayKey] || { cupsSkipped: 0 };
+            const todayCups = todayLog.cupsSkipped || 0;
+
+            document.getElementById('todaySkipCountText').textContent = todayCups;
+            const undoBtn = document.getElementById('undoSkipBtn');
+            if (todayCups > 0) {
+                undoBtn.classList.remove('hidden');
+            } else {
+                undoBtn.classList.add('hidden');
+            }
+
+            const stats = calculateStats();
+            document.getElementById('statStreak').textContent = stats.streak;
+            document.getElementById('statTotalCups').textContent = stats.totalCups;
+            document.getElementById('statSugarGrams').textContent = stats.sugarGrams.toLocaleString();
+            document.getElementById('statSugarSpoons').textContent = stats.sugarSpoons;
+            document.getElementById('statCalories').textContent = stats.calories.toLocaleString();
+
+            updateFeedbackDisplay(stats, todayCups, justClicked);
+            updateHeaderRuleBadge();
+            renderCalendar();
+        }
+
+        function scrollToCalendar() {
+            document.getElementById('calendarSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const styleMap = {
+                success: 'bg-charcoal/95 border-electric text-white shadow-neon',
+                info: 'bg-charcoal/95 border-sky-400 text-sky-100 shadow-lg'
+            };
+
+            const iconMap = {
+                success: 'fa-circle-check text-electric',
+                info: 'fa-circle-info text-sky-400'
+            };
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border backdrop-blur-md text-xs sm:text-sm font-medium animate-slide-up ${styleMap[type] || styleMap.info}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${iconMap[type] || iconMap.info} text-base"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag]));
+        }
+
+        // Boot Application
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            renderHealthyPicks();
+            initSymptomForm();
+            updateAllUI(false);
+        });
+    </script>
+</body>
+</html>
